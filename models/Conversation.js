@@ -9,8 +9,17 @@ const messageSchema = mongoose.Schema({
     },
     content: {
         type: String,
-        required: true,
+        required: false, // Make content optional since we can send only attachment
         trim: true
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    attachment: {
+        url: { type: String },
+        type: { type: String },
+        name: { type: String }
     }
 }, {
     timestamps: true

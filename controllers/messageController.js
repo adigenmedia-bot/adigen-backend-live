@@ -5,10 +5,30 @@ import User from '../models/User.js';
 export const getConversations = async (req, res) => {
     try {
         const userId = req.params.userId;
-        const conversations = await Conversation.find({ participants: userId })
+        let conversations = await Conversation.find({ participants: userId })
             .populate('participants', 'name email role isOnline lastActive')
             .populate('messages.sender', 'name email')
             .sort({ updatedAt: -1 });
+
+        // Auto-create a welcome conversation if they have no messages (e.g. newly registered user)
+        if (conversations.length === 0) {
+            const admin = await User.findOne({ role: 'College Admin' });
+            if (admin && admin._id.toString() !== userId) {
+                await Conversation.create({
+                    participants: [admin._id, userId],
+                    messages: [{
+                        sender: admin._id,
+                        content: "Hello! Welcome to the AdiGen platform. If you need any assistance, feel free to reply here."
+                    }]
+                });
+
+                // Refetch to include the newly populated conversation properly
+                conversations = await Conversation.find({ participants: userId })
+                    .populate('participants', 'name email role isOnline lastActive')
+                    .populate('messages.sender', 'name email')
+                    .sort({ updatedAt: -1 });
+            }
+        }
 
         // Map to client format
         const formatted = conversations.map(c => ({
@@ -23,9 +43,11 @@ export const getConversations = async (req, res) => {
             messages: c.messages.map(m => ({
                 id: m._id.toString(),
                 senderId: m.sender._id.toString(),
-                text: m.content,
+                text: m.content || '',
                 timestamp: m.createdAt,
-                isRead: true
+                isRead: true,
+                isDeleted: m.isDeleted,
+                attachment: m.attachment || null
             }))
         }));
 
@@ -39,7 +61,7 @@ export const getConversations = async (req, res) => {
 // Send a message
 export const sendMessage = async (req, res) => {
     try {
-        const { conversationId, senderId, text } = req.body;
+        const { conversationId, senderId, text, attachment } = req.body;
         
         let conversation;
         if (conversationId && conversationId !== 'new') {
@@ -49,7 +71,8 @@ export const sendMessage = async (req, res) => {
             }
             conversation.messages.push({
                 sender: senderId,
-                content: text
+                content: text,
+                attachment: attachment || undefined
             });
             await conversation.save();
         } else {
@@ -86,5 +109,23 @@ export const getOnlineStatus = async (req, res) => {
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// Delete/Unsend a message
+export const deleteMessage = async (req, res) => {
+    try {
+        const { conversationId, messageId } = req.params;
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) return res.status(404).json({ message: "Not found" });
+        
+        const message = conversation.messages.id(messageId);
+        if (message) {
+            message.isDeleted = true;
+            await conversation.save();
+        }
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ message: "Error" });
     }
 };

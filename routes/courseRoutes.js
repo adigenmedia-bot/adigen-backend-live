@@ -1,9 +1,10 @@
-
 import express from 'express';
+import { getCourses, createCourse, seedCourses } from '../controllers/courseController.js';
+
 const router = express.Router();
-import { getCourses, getCourseById } from '../controllers/courseController.js';
 
 router.get('/', getCourses);
-router.get('/:id', getCourseById);
+router.post('/', createCourse);
+router.post('/seed', seedCourses);
 
 export default router;

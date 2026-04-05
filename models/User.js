@@ -25,10 +25,16 @@ const userSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
+    appData: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
+    },
     lastActive: {
         type: Date,
         default: Date.now
     },
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     // For 'Student / Freelancer' role
     enrolledCourses: [{
         type: String // Using the course 'id' field for simplicity with seeder

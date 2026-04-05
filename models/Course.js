@@ -1,55 +1,28 @@
-
 import mongoose from 'mongoose';
 
-const lessonSchema = new mongoose.Schema({
-    id: String,
-    title: String,
-    type: { type: String, enum: ['video', 'quiz'] },
-    duration: String,
-    videoUrl: String,
-});
-
-const quizQuestionSchema = new mongoose.Schema({
-    id: String,
-    question: String,
-    options: [String],
-    correctAnswerIndex: Number,
-});
-
-const quizSchema = new mongoose.Schema({
-    id: String,
-    title: String,
-    type: { type: String, enum: ['quiz'] },
-    questions: [quizQuestionSchema],
-});
-
-const curriculumItemSchema = new mongoose.Schema({
-    id: String,
-    title: String,
-    type: { type: String, enum: ['video', 'quiz'] },
-    duration: String,
-    videoUrl: String,
-    questions: [quizQuestionSchema]
-});
-
-const chapterSchema = new mongoose.Schema({
-    id: String,
-    title: String,
-    items: [curriculumItemSchema],
-});
-
-
 const courseSchema = mongoose.Schema({
-    id: { type: String, required: true, unique: true },
     title: { type: String, required: true },
     instructor: { type: String, required: true },
-    image: { type: String, required: true },
+    rating: { type: Number, default: 0 },
+    reviews: { type: Number, default: 0 },
     price: { type: Number, required: true },
-    rating: { type: Number, required: true },
-    reviews: { type: Number, required: true },
-    description: { type: String, required: true },
-    whatYoullLearn: [String],
-    curriculum: [chapterSchema],
+    image: { type: String, required: true },
+    level: { type: String, default: 'Beginner' },
+    duration: { type: String, default: '0 hours' },
+    category: { type: String, default: 'Development' },
+    description: { type: String, default: '' },
+    curriculum: { type: mongoose.Schema.Types.Mixed, default: [] }
+}, { timestamps: true });
+
+// We transform _id to id to match frontend
+courseSchema.set('toJSON', {
+    virtuals: true,
+    transform: (doc, ret) => {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+        return ret;
+    }
 });
 
 const Course = mongoose.model('Course', courseSchema);

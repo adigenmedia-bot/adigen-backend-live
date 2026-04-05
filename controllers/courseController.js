@@ -1,33 +1,34 @@
-
 import Course from '../models/Course.js';
 
-// @desc    Fetch all courses
-// @route   GET /api/courses
-// @access  Public
-const getCourses = async (req, res) => {
+export const getCourses = async (req, res) => {
     try {
         const courses = await Course.find({});
         res.json(courses);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+    } catch (err) {
+        res.status(500).json({ message: "Server error fetching courses" });
     }
 };
 
-// @desc    Fetch single course
-// @route   GET /api/courses/:id
-// @access  Public
-const getCourseById = async (req, res) => {
+export const createCourse = async (req, res) => {
     try {
-        // Find by the custom 'id' field, not MongoDB's '_id'
-        const course = await Course.findOne({ id: req.params.id });
-        if (course) {
-            res.json(course);
-        } else {
-            res.status(404).json({ message: 'Course not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        const course = await Course.create(req.body);
+        res.status(201).json(course);
+    } catch (err) {
+        res.status(500).json({ message: "Server error creating course" });
     }
 };
 
-export { getCourses, getCourseById };
+export const seedCourses = async (req, res) => {
+    try {
+        const count = await Course.countDocuments();
+        if (count === 0) {
+            const initialCourses = req.body.courses || [];
+            if (initialCourses.length > 0) {
+                await Course.insertMany(initialCourses);
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ message: "Server error seeding courses" });
+    }
+};

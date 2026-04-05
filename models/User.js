@@ -21,6 +21,14 @@ const userSchema = mongoose.Schema({
         required: true,
         enum: ['Student / Freelancer', 'College Admin', 'Agency Partner']
     },
+    isOnline: {
+        type: Boolean,
+        default: false
+    },
+    lastActive: {
+        type: Date,
+        default: Date.now
+    },
     // For 'Student / Freelancer' role
     enrolledCourses: [{
         type: String // Using the course 'id' field for simplicity with seeder
